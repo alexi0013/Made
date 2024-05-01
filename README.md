@@ -1,6 +1,6 @@
 # Exercise Badges
 
-![](https://github.com/alexi0013/Made/blob/main/exercises/Exercise1.jv) ![](https://byob.yarr.is/jvalue/made-template/score_ex2) ![](https://byob.yarr.is/jvalue/made-template/score_ex3) ![](https://byob.yarr.is/jvalue/made-template/score_ex4) ![](https://byob.yarr.is/jvalue/made-template/score_ex5)
+![](https://github.com/alexi0013/Made/blob/main/exercises/score_ex1) ![](https://byob.yarr.is/jvalue/made-template/score_ex2) ![](https://byob.yarr.is/jvalue/made-template/score_ex3) ![](https://byob.yarr.is/jvalue/made-template/score_ex4) ![](https://byob.yarr.is/jvalue/made-template/score_ex5)
 
 # Methods of Advanced Data Engineering Template Project
 
