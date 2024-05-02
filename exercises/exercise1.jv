@@ -6,7 +6,6 @@ block AirportTextFileInterpreter oftype TextFileInterpreter {}
 
 block AirportCSVInterpreter oftype CSVInterpreter { delimiter: ';';}
 
-
 block AirportTableInterpreter oftype TableInterpreter {
 header: true;
 columns: [
@@ -26,7 +25,7 @@ columns: [
 ];
 }
 
-block DatabaseLoader oftype SQLiteLoader { table: "Airports"; file: "airports.sqlite1"; }
+block DatabaseLoader oftype SQLiteLoader { table: "Airports"; file: "airports.sqlite"; }
 
 DataExtractor
 ->AirportTextFileInterpreter
