@@ -6,7 +6,6 @@ block AirportTextFileInterpreter oftype TextFileInterpreter {}
 
 block AirportCSVInterpreter oftype CSVInterpreter { delimiter: ';';}
 
-
 block AirportTableInterpreter oftype TableInterpreter {
 header: true;
 columns: [
