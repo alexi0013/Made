@@ -5,7 +5,8 @@ Forecasting extreme weather (wildfires and floods) in third-world countries like
 
 ## Main Question
 1. Are there patterns for extreme weather in greece?
-2. How precise can extream weather events be forecasted?
+2. How precise can extreme weather events be forecasted?
+3. How can Forecasting be implemented in order to help third world countries to be able to react faster?
 
 ## Description
 XY is an important problem, because... This projects analyzes XY, using method A. The results can give insights into...
