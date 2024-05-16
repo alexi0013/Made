@@ -9,7 +9,7 @@ Forecasting extreme weather (wildfires and floods) in third-world countries like
 3. How can Forecasting be implemented in order to help third world countries to be able to react faster?
 
 ## Description
-XY is an important problem, because... This projects analyzes XY, using method A. The results can give insights into...
+This study aims to examine and forecast extreme weather events, specifically wildfires and floods, in third-world countries such as Greece. The focus will be on leveraging data analysis techniques to understand the patterns and drivers of these natural disasters. The analysis will utilize historical weather data, climate change indicators, and socio-economic factors to build predictive models. The goal is to provide actionable insights that can help mitigate the impact of these extreme weather events.
 
 ## Datasources
 ### Datasource1: ExampleSource
