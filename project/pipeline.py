@@ -1,6 +1,8 @@
 import os
 import pandas as pd
+import requests
 import sqlite3
+import zipfile
 
 def ensure_directory(path):
     if not os.path.exists(path):
