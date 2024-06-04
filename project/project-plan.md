@@ -14,12 +14,14 @@ This study aims to examine wildfires in Greece. The focus will be on leveraging 
 * Metadata URL: https://www.kaggle.com/datasets/balabaskar/historical-weather-data-of-all-country-capitals 
 * Data URL: https://www.kaggle.com/datasets/balabaskar/historical-weather-data-of-all-country-capitals?select=daily_weather_data.csv
 * Data Type: CSV
+* License: CC0: Public Domain
 * Short Description: This dataset includes weather records of all capital cities of the world, including temperature and wind speed.
 
 ### Datasource_2: 
 * Metadata URL: https://www.globalforestwatch.org/dashboards/country/GRC/?category=fires&location=WyJjb3VudHJ5IiwiR1JDIl0%3D
 * Data URL: viirs_fire_alerts__count.csv
 * Data Type: CSV
+* License: CC0: Public Domain
 * Short Description: This dataset includes wildfire alerts in greece throught the years.
 
 ## Work Packages
