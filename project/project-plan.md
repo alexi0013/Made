@@ -5,6 +5,7 @@ Assesing the impact of weather conditions on extreme weather events such as wild
 
 ## Main Question
 1. Are there any patterns in weather conditions for wildfires?
+2. Can we trace the occurences of wildfires back to climate change?
 
 ## Description
 This study aims to examine wildfires in Greece. The focus will be on leveraging data analysis techniques to understand the patterns and drivers of these natural disasters. The analysis will utilize historical weather data, climate change indicators, and socio-economic factors to build predictive models. The goal is to provide actionable insights that can help mitigate the impact of these extreme weather events.
