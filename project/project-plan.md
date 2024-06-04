@@ -26,9 +26,9 @@ This study aims to examine wildfires in Greece. The focus will be on leveraging 
 
 ## Work Packages
 1. Finding relevant datasets
-2. Have a schedule & project plan
-3. Data engineering of dataset
+2. Create schedule & project plan
+3. Data pipeline & Data Engineering
 4. Data Analysis
 5. Build/Rebuild a model for Forecasting
-6. Draw a Conclusion
-7. Give Practical Implications
+6. Draw Conclusion
+7. Give Practical Implications & Limitations
