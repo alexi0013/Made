@@ -1,1 +1,2 @@
-/project/pipeline.py
+#!/bin/bash
+python3 /project/pipeline.py
