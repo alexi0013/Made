@@ -1,0 +1,103 @@
+pipeline TrainTransportPipeline
+{
+    TrainTransportExtractor
+        -> TrainTransportTextFileInterpreter
+        -> TrainTransportCSVInterpreter 
+        -> TrainTransportRowDeleter
+        -> TrainTransportSelector
+        -> TransportedGetreideHeaderWriter
+        -> TransportedHeadRenamer
+        -> TrainTransportTableInterpreter
+        -> TrainTransportLoader;
+
+    block TrainTransportExtractor oftype HttpExtractor    
+    {
+        // link to downloadable CSV file
+        url: "https://www-genesis.destatis.de/genesis/downloads/00/tables/46131-0014_00.csv";
+    }
+    
+    block TrainTransportTextFileInterpreter oftype TextFileInterpreter { encoding: "latin3";}
+
+    block TrainTransportCSVInterpreter oftype CSVInterpreter 
+    {
+        delimiter: ";";
+    }
+
+    // Removes rows
+    block TrainTransportRowDeleter oftype RowDeleter
+    {
+        delete: [row 1, row 2, row 3, row 4, row 5, row 6];
+    }
+    
+    // Select only subset of columns
+    block TrainTransportSelector oftype CellRangeSelector
+    {
+        select: range A1:AU*;
+    }
+
+    // Add header names for columns A - E
+    block TransportedGetreideHeaderWriter oftype CellWriter
+    {
+        at: range A1:E1;
+        // New names: 'year', 'month', 'goods_id', 'goods_name', 'goods_source'
+        write: ["year", "month", "goods_id", "goods_name", "goods_source"];
+    }
+
+
+    // Rename headers
+    block TransportedHeadRenamer oftype CellWriter
+    {
+        at: range AT1:AU1;
+        // New names: 'abroad', 'total'
+        write: [ "abroad", "total"];
+    }
+
+    // Values need to be postive
+    valuetype PositiveNumCons oftype integer {
+        constraints: [PositiveNum];
+    }
+
+    constraint PositiveNum oftype RangeConstraint{
+        lowerBound: 0;
+        lowerBoundInclusive:true;
+    }
+
+        // 'month' must be a German month
+    valuetype MonthCapitalConst oftype text {
+        constraints: [GermanMonthConsrtraint];
+    }
+    constraint GermanMonthConsrtraint oftype AllowlistConstraint {
+        allowlist:['Januar','Februar','März','April','Mai','Juni','Juli','August','September','Oktober','November','Dezember'];
+    }
+
+        // 'goods_id' must start with NST7- and then followed by three numbers or capital letters
+    valuetype goods_idConst oftype text
+    {
+        constraints: [goods_id_NST7];
+    }
+        // Drop rows with missing or invalid values
+    constraint goods_id_NST7 oftype RegexConstraint
+    {
+        regex: /^NST7-[A-Z0-9]{3}$/;
+    }
+
+        // Choose suitable value types for all columns
+    block TrainTransportTableInterpreter oftype TableInterpreter 
+    {
+        header: true;
+        columns: [
+            "year" oftype PositiveNumCons,
+            "month" oftype MonthCapitalConst,
+            "goods_id" oftype goods_idConst,
+            "goods_name" oftype text,
+            "goods_source" oftype text, 
+            "abroad" oftype PositiveNumCons,
+            "total" oftype PositiveNumCons,  
+        ];
+    }
+        // Define data loader 
+    block TrainTransportLoader oftype SQLiteLoader {
+        table: "goods";
+        file: "goodsTransportedByTrain.sqlite";
+    }
+}
