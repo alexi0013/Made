@@ -1,10 +1,12 @@
-# Import libraries
+# Import necessary libraries
 import os
 import pandas as pd
 import argparse
 from kaggle.api.kaggle_api_extended import KaggleApi
+from io import StringIO
+import requests
 
-# Ensure the directory exists, else create it
+# Ensure the directory exists, elsee create it
 def ensure_directory(path):
     if not os.path.exists(path):
         try:
@@ -39,7 +41,7 @@ def process_weather_data(csv_file, output_folder):
         df_greece = df[df['country'].str.strip() == 'Greece']
         print("Filtered DataFrame head:", df_greece.head())
 
-        # Convert the date to datetime format
+        # Convert date column to datetime format
         df_greece['date'] = pd.to_datetime(df_greece['date'], format='%d-%m-%Y')
 
         # Extract week number and year
@@ -65,7 +67,7 @@ def process_weather_data(csv_file, output_folder):
             'pres': 'pressure'
         }, inplace=True)
 
-        # Group by year and week,then calculate the avg temp. and sum relevant columns
+        # Group by 'year' and 'week' + calculate the avg. temp. and sum other columns
         df_grouped = df_greece.groupby(['year', 'week'], as_index=False).agg({
             'temp.avg': 'mean',
             'temp.min': 'mean',
@@ -75,7 +77,7 @@ def process_weather_data(csv_file, output_folder):
             'pressure': 'mean'
         })
 
-        # Round aggregated values to one decimal place
+        # Round the aggregated values to one decimal place
         df_grouped = df_grouped.round(1)
 
         # Save the DataFrame to a new CSV file
@@ -92,15 +94,15 @@ def process_fire_alerts_data(csv_file, output_folder):
     df = pd.read_csv(csv_file, on_bad_lines='skip')
     print("Columns in the CSV file:", df.columns)
 
-    # Whitespace from column names
+    # Strip whitespace from column names
     df.columns = df.columns.str.strip()
     print("Columns after stripping whitespace:", df.columns)
 
-    # Drop the iso and confidence__cat columns
+    # Drop the 'iso' and 'confidence__cat' columns
     columns_to_drop = ['iso', 'confidence__cat']
     df.drop(columns=[col for col in columns_to_drop if col in df.columns], inplace=True)
 
-    # Filter the DataFrames again starting from week 41 of 2018 until week 41 of 2022
+    # Filter the DataFrame again starting from week 41 of 2018 until week 41 of 2022
     df = df[
         ((df['alert__year'] > 2018) | ((df['alert__year'] == 2018) & (df['alert__week'] >= 41))) &
         ((df['alert__year'] < 2022) | ((df['alert__year'] == 2022) & (df['alert__week'] <= 41)))
@@ -108,13 +110,13 @@ def process_fire_alerts_data(csv_file, output_folder):
     print(f"Filtered DataFrame length: {len(df)}")
     print("Filtered DataFrame head:", df.head())
 
-    # Group by alert__year and alert__week, then sum 'alert__count'
+    # Group by 'alert__year' and 'alert__week' + sum 'alert__count'
     df_grouped = df.groupby(['alert__year', 'alert__week'], as_index=False).agg({
         'alert__count': 'sum'
     })
     print("Grouped DataFrame head:", df_grouped.head())
 
-    # Save the grouped DataFrame to a new CSV file 
+    # Save the grouped DataFrame to a new CSV file
     output_csv_path = os.path.join(output_folder, 'processed_fire_alerts_aggregated.csv')
     df_grouped.to_csv(output_csv_path, index=False)
     print(f"Processed fire alerts saved to {output_csv_path}")
@@ -133,7 +135,7 @@ def merge_datasets(weather_csv, fire_alerts_csv, output_folder):
     print("Weather DataFrame dtypes:\n", weather_df.dtypes)
     print("Fire Alerts DataFrame dtypes:\n", fire_alerts_df.dtypes)
     
-    # Ensure the year and week columns are ints
+    # Ensure the 'year' and 'week' columns are ints
     weather_df['year'] = weather_df['year'].astype(int)
     weather_df['week'] = weather_df['week'].astype(int)
     fire_alerts_df['alert__year'] = fire_alerts_df['alert__year'].astype(int)
@@ -144,11 +146,11 @@ def merge_datasets(weather_csv, fire_alerts_csv, output_folder):
     print("Unique years in fire alerts data:", fire_alerts_df['alert__year'].unique())
     print("Unique weeks in fire alerts data:", fire_alerts_df['alert__week'].unique())
     
-    # Merge the DataFrames on the year and week columns
+    # Merge the DataFrames on the 'year' and 'week' columns
     merged_df = pd.merge(weather_df, fire_alerts_df, left_on=['year', 'week'], right_on=['alert__year', 'alert__week'], how='inner')
     merged_df.drop(columns=['alert__year', 'alert__week'], inplace=True)
     
-    # Save the merged DataFrame to a new CSV file 
+    # Save the merged DataFrame to a new CSV file
     output_csv_path = os.path.join(output_folder, 'merged_weather_fire_alerts.csv')
     merged_df.to_csv(output_csv_path, index=False)
     print(f"Merged data saved to {output_csv_path}")
@@ -156,10 +158,10 @@ def merge_datasets(weather_csv, fire_alerts_csv, output_folder):
     print("Merged DataFrame head:", merged_df.head())
 
 def main():
-    # Define the Kaggle datasets and file names
+    # Define the Kaggle datasets
     weather_dataset = 'balabaskar/historical-weather-data-of-all-country-capitals'
     weather_file_name = 'daily_weather_data.csv'
-    fire_alerts_dataset = 'the-path-to-fire-alerts-dataset'
+    fire_alerts_dataset = 'path-to-your-fire-alerts-dataset'
     fire_alerts_file_name = 'viirs_fire_alerts__count.csv'
 
     # Parse command-line arguments
@@ -167,7 +169,7 @@ def main():
     parser.add_argument('--output-dir', type=str, required=True, help='Directory to save the processed CSV files.')
     args = parser.parse_args()
 
-    # Output directory where CSV files are saved
+    # Output directory
     output_dir = args.output_dir
     ensure_directory(output_dir)
 
@@ -182,4 +184,11 @@ def main():
     process_fire_alerts_data(fire_alerts_csv, output_dir)
     
     # Paths to the processed CSV files
-    processed_weather_csv = os.path.join(output_dir, 'greece_weather_weekly_aggregated.csv
+    processed_weather_csv = os.path.join(output_dir, 'greece_weather_weekly_aggregated.csv')
+    processed_fire_alerts_csv = os.path.join(output_dir, 'processed_fire_alerts_aggregated.csv')
+    
+    # Merge the datasets
+    merge_datasets(processed_weather_csv, processed_fire_alerts_csv, output_dir)
+
+if __name__ == "__main__":
+    main()
