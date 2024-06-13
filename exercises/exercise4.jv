@@ -1,0 +1,85 @@
+//Automated Datapipeline
+pipeline BatteryPipeline {
+    BatteryDownloader ->
+        BatteryUnzipper ->
+        BatteryFileSelector ->
+        BatteryInterpreter ->
+        ColumnRenamer ->
+        ColumnSelector ->
+        BatteryTransformer ->
+        BatteryValidator ->
+        BatteryLoader;
+
+    // Download ZIP file
+    block BatteryDownloader oftype HttpExtractor {
+        url: "https://www.mowesta.com/data/measure/mowesta-dataset-20221107.zip";
+    }
+
+    // Unzip file
+    block BatteryUnzipper oftype ArchiveInterpreter {
+        archiveType: "zip";
+    }
+
+    // Select CSV file 
+    block BatteryFileSelector oftype FilePicker {
+        path: "/data.csv";
+    }
+
+    // Interpret CSV file
+    block BatteryInterpreter oftype CSVInterpreter {
+        delimiter: ";";
+    }
+
+    // Translate columnss into german
+    block ColumnRenamer oftype CellWriter {
+        at: range A1:F1;
+        write: ["id", "producer", "model", "month", "temperature", "battery_temperature"];
+    }
+
+    // Select only necessary columns
+    block ColumnSelector oftype CellRangeSelector {
+        select: range A1:F*;
+    }
+
+    // Transform temperatures from Celsius to Fahrenheit
+    block BatteryTransformer oftype TableTransformer {
+        inputColumns: ['temperature', 'battery_temperature'];
+        outputColumns: ['temperature', 'battery_temperature'];
+        use: CelsiusToFahrenheit;
+    }
+
+    // Validate data
+    block BatteryValidator oftype TableInterpreter {
+        header: true;
+        columns: [
+            "id" oftype integer constraints: [validID],
+            "producer" oftype text,
+            "model" oftype text,
+            "month" oftype integer constraints: [validMonth],
+            "temperature" oftype decimal,
+            "battery_temperature" oftype decimal
+        ];
+    }
+
+    // Load the data into a SQL database
+    block BatteryLoader oftype SQLiteLoader {
+        table: "temperatures";
+        file: "temperatures.sqlite";
+    }
+}
+
+// Transform formula
+transform CelsiusToFahrenheit {
+    from Celsius oftype decimal;
+    to Fahrenheit oftype decimal;
+    Fahrenheit: (Celsius * 9/5) + 32;
+}
+
+// Constraints
+constraint validID on integer {
+    value > 0;
+}
+
+constraint validMonth on integer {
+    value >= 1 and value <= 12;
+}
