@@ -1,85 +1,109 @@
 //Automated Datapipeline
-pipeline BatteryPipeline {
-    BatteryDownloader ->
-        BatteryUnzipper ->
-        BatteryFileSelector ->
-        BatteryInterpreter ->
-        ColumnRenamer ->
-        ColumnSelector ->
-        BatteryTransformer ->
-        BatteryValidator ->
-        BatteryLoader;
+pipeline BatterysPipeline {
+    BatteryExtractor 
+        -> BatteryArchiveInterpreter
+        -> BatteryFilePicker
+        -> BatteryFileInterpreter
+        -> BatterCSVInterpreter
+        -> BatteryColumnSelector
+        -> BatterysHeaderWriter
+        -> BatterysTempWriter
+        -> BatterysColumnDeleter
+        -> BatterysTableInterpreter
+        -> CelsiusToFahrenheitTemperatureTransformer
+        -> CelsiusToFahrenheitBatteryTemperatureTransformer
+        -> BatterySQLloader;
 
-    // Download ZIP file
-    block BatteryDownloader oftype HttpExtractor {
+    // Download data
+    block BatteryExtractor oftype HttpExtractor {
         url: "https://www.mowesta.com/data/measure/mowesta-dataset-20221107.zip";
     }
 
-    // Unzip file
-    block BatteryUnzipper oftype ArchiveInterpreter {
+    // Unzip data
+    block BatteryArchiveInterpreter oftype ArchiveInterpreter {
         archiveType: "zip";
     }
 
-    // Select CSV file 
-    block BatteryFileSelector oftype FilePicker {
+    // Use CSV file from unzipped document
+    block BatteryFilePicker oftype FilePicker {
         path: "/data.csv";
     }
-
-    // Interpret CSV file
-    block BatteryInterpreter oftype CSVInterpreter {
-        delimiter: ";";
+    block BatteryFileInterpreter oftype TextFileInterpreter {
     }
 
-    // Translate columnss into german
-    block ColumnRenamer oftype CellWriter {
-        at: range A1:F1;
-        write: ["id", "producer", "model", "month", "temperature", "battery_temperature"];
+    // Interprete CSV file
+    block BatterCSVInterpreter oftype CSVInterpreter   {
+    delimiter: ";";
     }
 
-    // Select only necessary columns
-    block ColumnSelector oftype CellRangeSelector {
-        select: range A1:F*;
+    // Delete unnecessary columns
+    block BatterysColumnDeleter oftype ColumnDeleter {
+        delete: [column F, column G, column H, column I];
     }
 
-    // Transform temperatures from Celsius to Fahrenheit
-    block BatteryTransformer oftype TableTransformer {
-        inputColumns: ['temperature', 'battery_temperature'];
-        outputColumns: ['temperature', 'battery_temperature'];
-        use: CelsiusToFahrenheit;
+    // select columns until Geraet aktiv  
+    block BatteryColumnSelector oftype CellRangeSelector   {
+        select: range A1:K*;
     }
 
-    // Validate data
-    block BatteryValidator oftype TableInterpreter {
+    // Translate columns into german
+    block BatterysHeaderWriter oftype CellWriter {
+        at:range A1:E1; 
+        write:["id", "producer", "model", "month", "Battery"];
+    }
+
+    // “Batterietemperatur in °C into battery_temperaturee
+    block BatterysTempWriter oftype CellWriter { 
+        at:cell J1; 
+        write:["battery_temperature"];
+        }
+
+    // Find SQL datatype for columns
+    block BatterysTableInterpreter oftype TableInterpreter    {
         header: true;
         columns: [
-            "id" oftype integer constraints: [validID],
-            "producer" oftype text,
-            "model" oftype text,
-            "month" oftype integer constraints: [validMonth],
-            "temperature" oftype decimal,
-            "battery_temperature" oftype decimal
+        "id" oftype ID,
+        "producer" oftype text,
+        "model" oftype text,
+        "month" oftype integer,
+        "Battery" oftype decimal,
+        "battery_temperature" oftype decimal,
         ];
     }
 
-    // Load the data into a SQL database
-    block BatteryLoader oftype SQLiteLoader {
-        table: "temperatures";
-        file: "temperatures.sqlite";
+    // Transform data for the columns
+    block CelsiusToFahrenheitTemperatureTransformer oftype TableTransformer {
+    inputColumns: ['Battery',];
+    outputColumn: 'Battery';
+    use: CelsiusToFahrenheit;
     }
-}
 
-// Transform formula
-transform CelsiusToFahrenheit {
-    from Celsius oftype decimal;
-    to Fahrenheit oftype decimal;
-    Fahrenheit: (Celsius * 9/5) + 32;
-}
+    //Transform data for the columns
+    block CelsiusToFahrenheitBatteryTemperatureTransformer oftype TableTransformer {
+    inputColumns: ['battery_temperature',];
+    outputColumn: 'battery_temperature';
+    use: CelsiusToFahrenheit;
+    }
 
-// Constraints
-constraint validID on integer {
+
+    // Transform Batterys in Celsius to Fahrenheit with the formula
+    transform CelsiusToFahrenheit   {
+        from Celsius oftype decimal;
+        to Fahrenheit oftype decimal;
+        Fahrenheit: (Celsius * 9/5) + 32;
+    }
+
+    // Write data into a SQL database
+    block BatterySQLloader oftype SQLiteLoader{
+        table: 'temperatures';
+        file: 'temperatures.sqlite';
+    }
+
+    // Constraints for validating data to be > 0
+    constraint validID on integer:
     value > 0;
-}
 
-constraint validMonth on integer {
-    value >= 1 and value <= 12;
+    valuetype ID oftype integer {
+    constraints: [validID];
+}
 }
