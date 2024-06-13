@@ -1,15 +1,15 @@
-//Automated datapipeline
+//Automated Datapipeline
 pipeline BatterysPipeline {
     BatteryExtractor 
         -> BatteryArchiveInterpreter
         -> BatteryFilePicker
         -> BatteryFileInterpreter
-        -> BatterCSVInterpreter
+        -> BatteryCSVInterpreter
         -> BatteryColumnSelector
-        -> BatterysHeaderWriter
-        -> BatterysTempWriter
-        -> BatterysColumnDeleter
-        -> BatterysTableInterpreter
+        -> BatteryHeaderWriter
+        -> BatteryTempWriter
+        -> BatteryColumnDeleter
+        -> BatteryTableInterpreter
         -> CelsiusToFahrenheitTemperatureTransformer
         -> CelsiusToFahrenheitBatteryTemperatureTransformer
         -> BatterySQLloader;
@@ -32,12 +32,12 @@ pipeline BatterysPipeline {
     }
 
     // Interprete CSV file
-    block BatterCSVInterpreter oftype CSVInterpreter   {
+    block BatteryCSVInterpreter oftype CSVInterpreter   {
     delimiter: ";";
     }
 
     // Delete unnecessary columns
-    block BatterysColumnDeleter oftype ColumnDeleter {
+    block BatteryColumnDeleter oftype ColumnDeleter {
         delete: [column F, column G, column H, column I];
     }
 
@@ -47,44 +47,43 @@ pipeline BatterysPipeline {
     }
 
     // Translate columns into german
-    block BatterysHeaderWriter oftype CellWriter {
-        at:range A1:E1; 
-        write:["id", "producer", "model", "month", "Battery"];
+    block BatteryHeaderWriter oftype CellWriter {
+        at: range A1:F1; 
+        write: ["id", "producer", "model", "month", "temperature", "battery_temperature"];
     }
 
-    // “Batterietemperatur in °C into battery_temperaturee
-    block BatterysTempWriter oftype CellWriter { 
-        at:cell J1; 
-        write:["battery_temperature"];
-        }
+    // “Batterietemperatur in °C into battery_temperature
+    block BatteryTempWriter oftype CellWriter { 
+        at: cell J1; 
+        write: ["battery_temperature"];
+    }
 
     // Find SQL datatype for columns
-    block BatterysTableInterpreter oftype TableInterpreter    {
+    block BatteryTableInterpreter oftype TableInterpreter    {
         header: true;
         columns: [
-        "id" oftype ID,
-        "producer" oftype text,
-        "model" oftype text,
-        "month" oftype integer,
-        "Battery" oftype decimal,
-        "battery_temperature" oftype decimal,
+            "id" oftype ID,
+            "producer" oftype text,
+            "model" oftype text,
+            "month" oftype integer,
+            "temperature" oftype decimal,
+            "battery_temperature" oftype decimal,
         ];
     }
 
     // Transform data for the columns
     block CelsiusToFahrenheitTemperatureTransformer oftype TableTransformer {
-    inputColumns: ['Battery',];
-    outputColumn: 'Battery';
-    use: CelsiusToFahrenheit;
+        inputColumns: ['temperature'];
+        outputColumn: 'temperature';
+        use: CelsiusToFahrenheit;
     }
 
-    //Transform data for the columns
+    // Transform data for the columns
     block CelsiusToFahrenheitBatteryTemperatureTransformer oftype TableTransformer {
-    inputColumns: ['battery_temperature',];
-    outputColumn: 'battery_temperature';
-    use: CelsiusToFahrenheit;
+        inputColumns: ['battery_temperature'];
+        outputColumn: 'battery_temperature';
+        use: CelsiusToFahrenheit;
     }
-
 
     // Transform Batterys in Celsius to Fahrenheit with the formula
     transform CelsiusToFahrenheit   {
@@ -105,5 +104,5 @@ pipeline BatterysPipeline {
 
     valuetype ID oftype integer {
     constraints: [validID];
-}
+    }
 }
