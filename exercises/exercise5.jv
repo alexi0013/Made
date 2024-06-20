@@ -1,0 +1,73 @@
+pipeline GTFSPipeline {
+
+    // Automated datapipeline
+    GTFSExtractor
+        -> ZipArchiveInterpreter
+        -> GTFSFilePicker
+        -> GTFSTextFileInterpreter
+        -> GTFSCSVInterpreter
+        -> GTFSTableInterpreter
+        -> GTFSLoader;
+
+    // Download data
+    block GTFSExtractor oftype HttpExtractor 
+    {
+        url: "https://gtfs.rhoenenergie-bus.de/GTFS.zip";
+    } 
+
+    // Unzip file
+    block ZipArchiveInterpreter oftype ArchiveInterpreter 
+    {
+        archiveType: "zip";
+    }
+
+    // Use CSV file from unzipped documenty
+    block GTFSFilePicker oftype FilePicker      
+    {
+        path: "/stops.txt";
+    }
+
+    // Interpret CSV file
+    block GTFSTextFileInterpreter oftype TextFileInterpreter {encoding:"utf8";}
+    block GTFSCSVInterpreter oftype CSVInterpreter 
+    {
+        delimiter: ",";
+        enclosing: '"';
+    }
+
+    // Pick out stops
+    block GTFSTableInterpreter oftype TableInterpreter 
+    {
+        header : true;
+        columns : [
+            "stop_id" oftype integer,
+            "stop_name" oftype text,
+            "stop_lat" oftype Geocoordinates,
+            "stop_lon" oftype Geocoordinates,
+            "zone_id" oftype Zone,
+        ];
+    }
+    
+    // Write data into SQL loader
+    block GTFSLoader oftype SQLiteLoader 
+    {
+        file: "gtfs.sqlite";
+        table: "stops";
+
+    }
+
+    // Filtering geographical upper and lower bounds
+    constraint Coordinates on decimal:
+        value >= -90 and value <= 90;
+    valuetype Geocoordinates oftype decimal {
+        constraints:[Coordinates];
+    }
+    // Only keep stops from zone 1645
+    constraint ZoneConstraint on integer:
+        value == 1645;
+    valuetype Zone oftype integer {
+        constraints:[ZoneConstraint];
+    }
+    
+
+}
